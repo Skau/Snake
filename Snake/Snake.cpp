@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-Snake::Snake()
+Snake::Snake() : hasSetDifficulty{ false }
 {
 	image = std::make_unique<sf::Image>();
 
@@ -85,6 +85,13 @@ std::shared_ptr<Node> Snake::spawnNewNode()
 	nodes.push_back(newNode);
 
 	return newNode;
+}
+
+void Snake::setDifficulty(int diff)
+{
+	timeBetweenMovement = sf::milliseconds(60 - diff * 5);
+
+	hasSetDifficulty = true;
 }
 
 void Snake::move(float deltaTime)

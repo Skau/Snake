@@ -6,7 +6,7 @@
 #include "Snake.h"
 #include "Dot.h"
 
-Game::Game()
+Game::Game() : difficulty{ 1 }
 {
 	srand((int)time(NULL));
 
@@ -20,17 +20,27 @@ Game::Game()
 		std::cerr << "Could not load red image!\n";
 	}
 
-	scoreFont = std::make_unique<sf::Font>();
+	font = std::make_unique<sf::Font>();
 
-	if (!scoreFont->loadFromFile("fonts/arial.ttf"))
+	if (!font->loadFromFile("fonts/arial.ttf"))
 	{
 		std::cerr << "Could not load font!\n";
 	}
+	difficultyText = std::make_unique<sf::Text>();
+	difficultyText->setFont(*font);
+	difficultyText->setCharacterSize(20);
+	difficultyText->setPosition(sf::Vector2f(10, 10));
 
 	scoreText = std::make_unique<sf::Text>();
-	scoreText->setFont(*scoreFont);
+	scoreText->setFont(*font);
 	scoreText->setCharacterSize(70);
-	scoreText->setPosition(sf::Vector2f(700, 700));
+	scoreText->setPosition(sf::Vector2f(670, 700));
+
+	resetText = std::make_unique<sf::Text>();
+	resetText->setFont(*font);
+	resetText->setCharacterSize(30);
+	resetText->setPosition(sf::Vector2f(10, 750));
+	resetText->setString("Press 'R' to reset game");
 }
 
 void Game::init()
@@ -38,8 +48,6 @@ void Game::init()
 	score = 0;
 
 	snake = std::make_shared<Snake>();
-
-	dot = std::make_shared<Dot>(*dotImage, sf::Vector2f(200, 200));
 
 	sf::Time timeSinceLastUpdate = sf::Time::Zero;
 
@@ -67,9 +75,54 @@ void Game::handleEvents()
 		if (event.type == sf::Event::Closed)
 			window->close();
 
+		if (!isPlaying)
+		{
+			if (event.type == sf::Event::KeyPressed)
+			{
+				switch (event.key.code)
+				{
+				case sf::Keyboard::Key::Num1:
+					difficulty = 1;
+					break;
+				case sf::Keyboard::Key::Num2:
+					difficulty = 2;
+					break;
+				case sf::Keyboard::Key::Num3:
+					difficulty = 3;
+					break;
+				case sf::Keyboard::Key::Num4:
+					difficulty = 4;
+					break;
+				case sf::Keyboard::Key::Num5:
+					difficulty = 5;
+					break;
+				case sf::Keyboard::Key::Num6:
+					difficulty = 6;
+					break;
+				case sf::Keyboard::Key::Num7:
+					difficulty = 7;
+					break;
+				case sf::Keyboard::Key::Num8:
+					difficulty = 8;
+					break;
+				case sf::Keyboard::Key::Num9:
+					difficulty = 9;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
 		{
-			isPlaying = !isPlaying;
+			if (!isPlaying)
+				isPlaying = true;
+		}
+
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
+		{
+			resetGame();
 		}
 
 		snake->handleEvents(event);
@@ -82,6 +135,11 @@ void Game::mainTick()
 	while (timeSinceLastUpdate > timePerFrame)
 	{
 		timeSinceLastUpdate -= timePerFrame;
+
+		if (!snake->getHasSetDifficulty())
+		{
+			snake->setDifficulty(difficulty);
+		}
 
 		if (!dot.get())
 		{
@@ -100,7 +158,7 @@ void Game::mainTick()
 		{
 			dot.reset();
 			snake->spawnNewNode();
-			score++;
+			score+= difficulty;
 		}
 
 		snake->tick(timePerFrame.asSeconds());
@@ -119,6 +177,14 @@ void Game::render()
 
 	scoreText->setString(std::to_string(score));
 	window->draw(*scoreText);
+
+	if (!isPlaying)
+	{
+		difficultyText->setString("Current difficulty level: " + std::to_string(difficulty) + " (To change, press numbers 1 - 9)");
+		window->draw(*difficultyText);
+	}
+
+	window->draw(*resetText);
 	window->display();
 }
 
@@ -146,6 +212,8 @@ sf::Vector2f Game::getRandomPos()
 void Game::resetGame()
 {
 	snake.reset();
+	if (dot.get())
+		dot.reset();
 	isPlaying = false;
 	init();
 }

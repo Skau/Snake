@@ -65,12 +65,17 @@ public:
 
 	std::shared_ptr<Node> spawnNewNode();
 
+	bool getHasSetDifficulty() { return hasSetDifficulty; }
+	void setDifficulty(int diff);
+
 private:
 	void move(float deltaTime);
 
 	Direction direction;
 
 	Direction lastDirection;
+
+	bool hasSetDifficulty;
 
 	bool isMoving;
 
@@ -84,6 +89,6 @@ private:
 
 	sf::Clock movementClock;
 	sf::Time timeBetweenMovementElapsed;
-	const sf::Time timeBetweenMovement = sf::milliseconds(50);
+	sf::Time timeBetweenMovement;
 };
 
