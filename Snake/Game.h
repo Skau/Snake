@@ -21,8 +21,14 @@ private:
 
 	sf::Vector2f getRandomPos();
 
+	void resetGame();
+
+	bool isPlaying;
+
+	int score;
+
 	sf::Clock frameClock;
-	const sf::Time timePerFrame = sf::seconds(1.0f / 120.f);
+	const sf::Time timePerFrame = sf::seconds(1.0f / 60.f);
 	sf::Time timeSinceLastUpdate;
 
 	std::unique_ptr<sf::Image> snakeImage;
@@ -31,7 +37,8 @@ private:
 
 	std::shared_ptr<Snake> snake;
 	std::shared_ptr<Dot> dot;
-	std::vector<std::shared_ptr<Entity>> entities;
 
+	std::unique_ptr<sf::Font> scoreFont;
+	std::unique_ptr<sf::Text> scoreText;
 };
 

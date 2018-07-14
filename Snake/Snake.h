@@ -18,12 +18,6 @@ struct Node
 	sf::Vector2f pos;
 	sf::Vector2f lastPos;
 
-	Direction direction;
-	Direction lastDirection;
-
-	std::shared_ptr<Node> getNodeInFront() { return nodeInFront; }
-	void setNodeInFront(std::shared_ptr<Node> n) { nodeInFront = n; }
-
 
 	Node(sf::Image& image, sf::Vector2f pos)
 	{
@@ -40,7 +34,7 @@ struct Node
 		colBox = std::make_unique<sf::RectangleShape>(sf::RectangleShape((sf::Vector2f((float)texture->getSize().x, (float)texture->getSize().y))));
 		colBox->setOrigin((float)texture->getSize().x / 2, (float)texture->getSize().y / 2);
 		colBox->setPosition(sprite->getPosition());
-		colBox->setOutlineThickness(1.5f);
+
 		colBox->setFillColor(sf::Color::Transparent);
 		colBox->setOutlineColor(sf::Color::White);
 	}
@@ -49,7 +43,6 @@ private:
 	std::unique_ptr<sf::Sprite> sprite;
 	std::unique_ptr<sf::Texture> texture;
 	std::unique_ptr<sf::RectangleShape> colBox;
-	std::shared_ptr<Node> nodeInFront;
 };
 
 class Snake
@@ -77,6 +70,8 @@ private:
 
 	Direction direction;
 
+	Direction lastDirection;
+
 	bool isMoving;
 
 	std::unique_ptr<sf::Image> image;
@@ -85,6 +80,10 @@ private:
 
 	std::shared_ptr<Node> headNode;
 
-	const float vel = 250;
+	const float vel = 1500;
+
+	sf::Clock movementClock;
+	sf::Time timeBetweenMovementElapsed;
+	const sf::Time timeBetweenMovement = sf::milliseconds(50);
 };
 

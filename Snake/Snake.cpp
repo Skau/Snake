@@ -1,6 +1,8 @@
 #include "Snake.h"
 #include "SFML/Graphics.hpp"
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 Snake::Snake()
 {
@@ -11,7 +13,17 @@ Snake::Snake()
 		std::cerr << "Could not load blue image!\n";
 	}
 
-	headNode = spawnNewNode();
+	headNode = std::make_shared<Node>(*image, sf::Vector2f(400,400));
+	nodes.push_back(headNode);
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
+
+	timeBetweenMovementElapsed = sf::Time::Zero;
+
+	direction = Direction::RIGHT;
+	lastDirection = direction;
 }
 
 void Snake::handleEvents(sf::Event& e)
@@ -21,20 +33,28 @@ void Snake::handleEvents(sf::Event& e)
 		switch (e.key.code)
 		{
 		case sf::Keyboard::Up:
-			direction = Direction::UP;
-			isMoving = true;
+			if (lastDirection != Direction::DOWN)
+			{
+				direction = Direction::UP;
+			}
 			break;
 		case sf::Keyboard::Down:
-			direction = Direction::DOWN;
-			isMoving = true;
+			if (lastDirection != Direction::UP)
+			{
+				direction = Direction::DOWN;
+			}
 			break;
 		case sf::Keyboard::Left:
-			direction = Direction::LEFT;
-			isMoving = true;
+			if (lastDirection != Direction::RIGHT)
+			{
+				direction = Direction::LEFT;
+			}
 			break;
 		case sf::Keyboard::Right:
-			direction = Direction::RIGHT;
-			isMoving = true; 
+			if (lastDirection != Direction::LEFT)
+			{
+				direction = Direction::RIGHT;
+			}
 			break;
 		default:
 			break;
@@ -44,8 +64,12 @@ void Snake::handleEvents(sf::Event& e)
 
 void Snake::tick(float deltaTime)
 {
-	if (isMoving)
+	timeBetweenMovementElapsed += movementClock.restart();
+
+	if (timeBetweenMovementElapsed > timeBetweenMovement)
+	{
 		move(deltaTime);
+	}
 }
 
 
@@ -53,130 +77,68 @@ std::shared_ptr<Node> Snake::spawnNewNode()
 {
 	sf::Vector2f pos;
 
-	if (nodes.size())
-	{
-		auto n = nodes.front();
-		if (n.get())
-		{
-			switch (n->lastDirection)
-			{
-			case Direction::UP:
-			{
-				pos = sf::Vector2f(n->pos.x, n->pos.y - 24);
-				break;
-			}
-			case Direction::DOWN:
-			{
-				pos = sf::Vector2f(n->pos.x, n->pos.y + 24);
-				break;
-			}
-			case Direction::LEFT:
-			{
-				pos = sf::Vector2f(n->pos.x - 24, n->pos.y);
-				break;
-			}
-			case Direction::RIGHT:
-			{
-				pos = sf::Vector2f(n->pos.x + 24, n->pos.y);
-				break;
-			}
-			default:
-				break;
-			}
-		}
-		else
-		{
-			pos = sf::Vector2f(400, 400);
-		}
-	}
-	else
-	{
-		pos = sf::Vector2f(400, 400);
-	}
+	auto direction = (nodes[nodes.size() - 1]->pos - nodes[nodes.size() - 2]->pos);
+	pos = nodes[nodes.size() - 1]->pos + direction;
 
 	std::shared_ptr<Node> newNode = std::make_shared<Node>(*image, pos);
-	if (nodes.size())
 	{
-		newNode->setNodeInFront(nodes.back());
-	}
-		nodes.push_back(newNode);
 
 	return newNode;
 }
 
 void Snake::move(float deltaTime)
 {
-
+	headNode->lastPos = headNode->pos;
+	
 	switch (direction)
 	{
 	case Direction::UP:
-		headNode->lastPos = headNode->pos + sf::Vector2f(0, 24);
 		headNode->pos.y -= vel * deltaTime;
 		break;
 	case Direction::DOWN:
-		headNode->lastPos = headNode->pos - sf::Vector2f(0, 24);
 		headNode->pos.y += vel * deltaTime;
 		break;
 	case Direction::LEFT:
-		headNode->lastPos = headNode->pos + sf::Vector2f(24, 0);
 		headNode->pos.x -= vel * deltaTime;
 		break;
 	case Direction::RIGHT:
-		headNode->lastPos = headNode->pos - sf::Vector2f(24, 0);
 		headNode->pos.x += vel * deltaTime;
 		break;
 	default:
 		break;
 	}
+	 
+	if (headNode->pos.x < 0)
+	{
+		headNode->pos.x = 800;
+	}
+	if (headNode->pos.y < 0)
+	{
+		headNode->pos.y = 800;
+	}
+	if (headNode->pos.x > 800)
+	{
+		headNode->pos.x = 0;
+	}
+	if (headNode->pos.y > 800)
+	{
+		headNode->pos.y = 0;
+	}
 
-	if (headNode->pos.x <= 0)
-	{
-		headNode->pos.x += vel;
-	}
-	if(headNode->pos.y <= 0)
-	{
-		headNode->pos.y += vel;
-	}
-	if (headNode->pos.x >= 800)
-	{
-		headNode->pos.x -= vel;
-	}
-	if (headNode->pos.y >= 800)
-	{
-		headNode->pos.y -= vel;
-	}
-
-	headNode->lastDirection = direction;
-	headNode->direction = direction;
 	headNode->getSprite().setPosition(headNode->pos);
 	headNode->getColBox().setPosition(headNode->pos);
 
-	for (auto& node : nodes)
+	for (int i = 1; i < nodes.size(); ++i)
 	{
-		if (node->getNodeInFront())
-		{
-			switch (node->lastDirection)
-			{
-			case Direction::UP:
-				node->lastPos = node->pos + sf::Vector2f(0, 24);
-				break;
-			case Direction::DOWN:
-				node->lastPos = node->pos - sf::Vector2f(0, 24);
-				break;
-			case Direction::LEFT:
-				node->lastPos = node->pos + sf::Vector2f(24, 0);
-				break;
-			case Direction::RIGHT:
-				node->lastPos = node->pos - sf::Vector2f(24, 0);
-				break;
-			default:
-				break;
-			}
-			node->pos = node->getNodeInFront()->lastPos;
-			node->getSprite().setPosition(node->pos);
-			node->getColBox().setPosition(node->pos);
-		}
+		nodes[i]->lastPos = nodes[i]->pos;
+		nodes[i]->pos = nodes[i - 1]->lastPos;
+		nodes[i]->getSprite().setPosition(nodes[i]->pos);
+		nodes[i]->getColBox().setPosition(nodes[i]->pos);
 	}
+
+	timeBetweenMovementElapsed = sf::Time::Zero;
+
+	lastDirection = direction;
 }
 
 void Snake::render(sf::RenderWindow & window)
