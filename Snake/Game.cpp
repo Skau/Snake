@@ -180,7 +180,7 @@ void Game::render()
 
 	if (!isPlaying)
 	{
-		difficultyText->setString("Current difficulty level: " + std::to_string(difficulty) + " (To change, press numbers 1 - 9)");
+		difficultyText->setString("Current difficulty level: " + std::to_string(difficulty) + " (To change, press numbers 1 - 9)   Spacebar to start game");
 		window->draw(*difficultyText);
 	}
 
