@@ -15,10 +15,10 @@ Snake::Snake()
 
 	headNode = std::make_shared<Node>(*image, sf::Vector2f(400,400));
 	nodes.push_back(headNode);
-	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
-	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
-	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
-	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 24, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));
+	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));
 
 	timeBetweenMovementElapsed = sf::Time::Zero;
 
@@ -77,11 +77,12 @@ std::shared_ptr<Node> Snake::spawnNewNode()
 {
 	sf::Vector2f pos;
 
-	auto direction = (nodes[nodes.size() - 1]->pos - nodes[nodes.size() - 2]->pos);
-	pos = nodes[nodes.size() - 1]->pos + direction;
+	sf::Vector2f deltaPos = (nodes[nodes.size() - 1]->pos - nodes[nodes.size() - 2]->pos);
+	pos = nodes[nodes.size() - 1]->pos + deltaPos;
 
 	std::shared_ptr<Node> newNode = std::make_shared<Node>(*image, pos);
-	{
+
+	nodes.push_back(newNode);
 
 	return newNode;
 }
