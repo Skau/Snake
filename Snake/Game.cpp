@@ -4,9 +4,10 @@
 #include <iostream>
 #include <time.h>
 #include "Snake.h"
+#include "Button.h"
 #include "Dot.h"
 
-Game::Game() : difficulty{ 1 }
+Game::Game() : difficulty{ 1 }, gameState {GameState::MENU}
 {
 	srand((int)time(NULL));
 
@@ -51,6 +52,9 @@ void Game::init()
 
 	sf::Time timeSinceLastUpdate = sf::Time::Zero;
 
+	startButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) - 200, ((float)window->getSize().y / 2) + 100), 200.f, 100.f, "Start game");
+	exitButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) + 200, ((float)window->getSize().y / 2) + 100), 200.f, 100.f, "Exit");
+
 	mainLoop();
 }
 
@@ -60,7 +64,6 @@ void Game::mainLoop()
 	{
 		handleEvents();
 
-		if(isPlaying)
 		mainTick();
 		
 		render();
@@ -75,7 +78,32 @@ void Game::handleEvents()
 		if (event.type == sf::Event::Closed)
 			window->close();
 
-		if (!isPlaying)
+		if (event.type == sf::Event::MouseMoved)
+		{
+			auto pos = sf::Mouse::getPosition(*window);
+			startButton->checkHover(pos);
+			exitButton->checkHover(pos);
+			
+		}
+
+		if (event.type == sf::Event::MouseButtonPressed)
+		{
+			auto pos = sf::Mouse::getPosition(*window);
+			if (startButton->checkHover(pos))
+			{
+				startButton->onClick();
+				gameState = GameState::INGAME;
+				startButton->setIsHidden(true);
+			}
+			if (exitButton->checkHover(pos))
+			{
+				exitButton->onClick();
+				window->close();
+			}
+			
+		}
+
+		if (gameState == GameState::MENU)
 		{
 			if (event.type == sf::Event::KeyPressed)
 			{
@@ -116,8 +144,11 @@ void Game::handleEvents()
 
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
 		{
-			if (!isPlaying)
-				isPlaying = true;
+			if (gameState == GameState::MENU)
+			{
+				gameState = GameState::INGAME;
+				startButton->setIsHidden(true);
+			}
 		}
 
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
@@ -135,35 +166,18 @@ void Game::mainTick()
 	while (timeSinceLastUpdate > timePerFrame)
 	{
 		timeSinceLastUpdate -= timePerFrame;
-
-		if (!snake->getHasSetDifficulty())
+		switch (gameState)
 		{
-			snake->setDifficulty(difficulty);
+		case GameState::MENU:
+			menuTick();
+			break;
+		case GameState::INGAME:
+			inGameTick(timePerFrame.asSeconds());
+			break;
+		default:
+			break;
 		}
-
-		if (!dot.get())
-		{
-			dot = std::make_shared<Dot>(*dotImage, getRandomPos());
-		}
-
-		for (int i = 3; i < snake->getNodes().size(); ++i)
-		{
-			if (snake->getHeadNode().getColBox().getGlobalBounds().intersects(snake->getNodes()[i]->getColBox().getGlobalBounds()))
-			{
-				resetGame();
-			}
-		}
-
-		if (snake->getNodes().front()->getColBox().getGlobalBounds().intersects(dot->getColBox().getGlobalBounds()))
-		{
-			dot.reset();
-			snake->spawnNewNode();
-			score+= difficulty;
-		}
-
-		snake->tick(timePerFrame.asSeconds());
 	}
-
 }
 
 void Game::render()
@@ -178,14 +192,56 @@ void Game::render()
 	scoreText->setString(std::to_string(score));
 	window->draw(*scoreText);
 
-	if (!isPlaying)
+	if (gameState == GameState::MENU)
 	{
 		difficultyText->setString("Current difficulty level: " + std::to_string(difficulty) + " (To change, press numbers 1 - 9)   Spacebar to start game");
 		window->draw(*difficultyText);
+
+		startButton->render(*window);
+		exitButton->render(*window);
 	}
 
 	window->draw(*resetText);
+
 	window->display();
+}
+
+void Game::inGameTick(float deltaTime)
+{
+	if (!snake->getHasSetDifficulty())
+	{
+		snake->setDifficulty(difficulty);
+	}
+
+	if (!dot.get())
+	{
+		dot = std::make_shared<Dot>(*dotImage, getRandomPos());
+	}
+
+	for (int i = 3; i < snake->getNodes().size(); ++i)
+	{
+		if (snake->getHeadNode().getColBox().getGlobalBounds().intersects(snake->getNodes()[i]->getColBox().getGlobalBounds()))
+		{
+			resetGame();
+		}
+	}
+
+	if (dot.get())
+	{
+		if (snake->getHeadNode().getColBox().getGlobalBounds().intersects(dot->getColBox().getGlobalBounds()))
+		{
+			dot.reset();
+			snake->spawnNewNode();
+			score += difficulty;
+		}
+	}
+	snake->tick(timePerFrame.asSeconds());
+}
+
+void Game::menuTick()
+{
+	startButton->Tick();
+	exitButton->Tick();
 }
 
 sf::Vector2f Game::getRandomPos()
@@ -213,7 +269,10 @@ void Game::resetGame()
 {
 	snake.reset();
 	if (dot.get())
+	{
 		dot.reset();
-	isPlaying = false;
+	}
+	gameState = GameState::MENU;
+	startButton->setIsHidden(false);
 	init();
 }

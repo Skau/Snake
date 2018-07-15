@@ -13,7 +13,7 @@ Snake::Snake() : hasSetDifficulty{ false }
 		std::cerr << "Could not load blue image!\n";
 	}
 
-	headNode = std::make_shared<Node>(*image, sf::Vector2f(400,400));
+	headNode = std::make_shared<Node>(*image, sf::Vector2f(450,400));
 	nodes.push_back(headNode);
 	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));
 	nodes.emplace_back(std::make_shared<Node>(*image, sf::Vector2f(nodes.back()->pos.x - 25, 400)));

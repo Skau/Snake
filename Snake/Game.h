@@ -4,6 +4,13 @@
 class Entity;
 class Snake;
 class Dot;
+class Button;
+
+enum class GameState
+{
+	MENU,
+	INGAME
+};
 
 class Game
 {
@@ -16,18 +23,21 @@ public:
 private:
 	void mainLoop();
 	void handleEvents();
-	void mainTick();
+	void mainTick(); 
 	void render();
+
+	void inGameTick(float deltaTime);
+	void menuTick();
 
 	sf::Vector2f getRandomPos();
 
 	void resetGame();
 
-	bool isPlaying;
-
 	int score;
 
 	int difficulty;
+
+	GameState gameState;
 
 	sf::Clock frameClock;
 	const sf::Time timePerFrame = sf::seconds(1.0f / 60.f);
@@ -44,5 +54,8 @@ private:
 	std::unique_ptr<sf::Text> difficultyText;
 	std::unique_ptr<sf::Text> scoreText;
 	std::unique_ptr<sf::Text> resetText;
+
+	std::shared_ptr<Button> startButton;
+	std::shared_ptr<Button> exitButton;
 };
 
