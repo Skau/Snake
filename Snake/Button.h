@@ -1,5 +1,6 @@
 #pragma once
 #include "SFML/Graphics.hpp"
+#include <functional>
 class Button
 {
 public:
@@ -7,7 +8,7 @@ public:
 	Button(sf::Vector2f pos, float width, float height, std::string text);
 	~Button() = default;
 
-	void Tick();
+	void Tick(sf::Vector2i mousePos);
 
 	void render(sf::RenderWindow& window);
 
@@ -15,11 +16,15 @@ public:
 
 	bool checkHover(sf::Vector2i mousePos);
 
+	bool getIsHovered() { return isHovered; }
+
 	void onClick();
 
 	void setIsHidden(bool value) { isHidden = value; }
 
 	bool getIsHidden() { return isHidden; }
+
+	void setOnClick(std::function<void()> func) { onClickFunc = func; }
 
 private:
 	std::unique_ptr<sf::RectangleShape> box;
@@ -29,4 +34,6 @@ private:
 	const sf::Color hoveredColor = sf::Color::Blue; 
 	bool isHidden;
 	bool isHovered;
+
+	std::function<void()> onClickFunc;
 };

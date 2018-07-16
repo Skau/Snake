@@ -7,7 +7,7 @@
 #include "Button.h"
 #include "Dot.h"
 
-Game::Game() : difficulty{ 1 }, gameState {GameState::MENU}
+Game::Game() : difficulty{ 1 }, gameState{ GameState::MENU }, lastScore{ 0 }
 {
 	srand((int)time(NULL));
 
@@ -21,27 +21,9 @@ Game::Game() : difficulty{ 1 }, gameState {GameState::MENU}
 		std::cerr << "Could not load red image!\n";
 	}
 
-	font = std::make_unique<sf::Font>();
+	createButtons();
 
-	if (!font->loadFromFile("fonts/arial.ttf"))
-	{
-		std::cerr << "Could not load font!\n";
-	}
-	difficultyText = std::make_unique<sf::Text>();
-	difficultyText->setFont(*font);
-	difficultyText->setCharacterSize(20);
-	difficultyText->setPosition(sf::Vector2f(10, 10));
-
-	scoreText = std::make_unique<sf::Text>();
-	scoreText->setFont(*font);
-	scoreText->setCharacterSize(70);
-	scoreText->setPosition(sf::Vector2f(670, 700));
-
-	resetText = std::make_unique<sf::Text>();
-	resetText->setFont(*font);
-	resetText->setCharacterSize(30);
-	resetText->setPosition(sf::Vector2f(10, 750));
-	resetText->setString("Press 'R' to reset game");
+	createTexts();
 }
 
 void Game::init()
@@ -52,10 +34,68 @@ void Game::init()
 
 	sf::Time timeSinceLastUpdate = sf::Time::Zero;
 
-	startButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) - 200, ((float)window->getSize().y / 2) + 100), 200.f, 100.f, "Start game");
-	exitButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) + 200, ((float)window->getSize().y / 2) + 100), 200.f, 100.f, "Exit");
-
 	mainLoop();
+}
+
+void Game::createButtons()
+{
+	incrementDifficultyButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) + 200, ((float)window->getSize().y / 2) - 250), 200.f, 100.f, "Difficulty ++");
+
+	incrementDifficultyButton->setOnClick([&]() {
+		if (difficulty < 9)
+			difficulty++;
+	});
+
+	allButtons.push_back(incrementDifficultyButton);
+
+	decrementDifficultyButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2) - 200, ((float)window->getSize().y / 2) - 250), 200.f, 100.f, "Difficulty --");
+
+	decrementDifficultyButton->setOnClick([&]()
+	{
+		if (difficulty > 1)
+			difficulty--;
+	});
+
+	allButtons.push_back(decrementDifficultyButton);
+
+	exitButton = std::make_shared<Button>(sf::Vector2f(((float)window->getSize().x / 2), ((float)window->getSize().y / 2) + 230), 200.f, 100.f, "Quit game");
+
+	exitButton->setOnClick([&]()
+	{
+		window->close();
+	});
+
+	allButtons.push_back(exitButton);
+}
+
+void Game::createTexts()
+{
+	font = std::make_unique<sf::Font>();
+
+	if (!font->loadFromFile("fonts/arial.ttf"))
+	{
+		std::cerr << "Could not load font!\n";
+	}
+	difficultyText = std::make_unique<sf::Text>();
+	difficultyText->setFont(*font);
+	difficultyText->setCharacterSize(30);
+	difficultyText->setPosition(sf::Vector2f(10, 10));
+
+	scoreText = std::make_unique<sf::Text>();
+	scoreText->setFont(*font);
+	scoreText->setCharacterSize(70);
+	scoreText->setPosition(sf::Vector2f(670, 700));
+
+	lastScoreText = std::make_unique<sf::Text>();
+	lastScoreText->setFont(*font);
+	lastScoreText->setCharacterSize(30);
+	lastScoreText->setPosition(sf::Vector2f(370, 740));
+
+	resetText = std::make_unique<sf::Text>();
+	resetText->setFont(*font);
+	resetText->setCharacterSize(30);
+	resetText->setPosition(sf::Vector2f(10, 740));
+	resetText->setString("Press 'R' to reset game");
 }
 
 void Game::mainLoop()
@@ -78,29 +118,15 @@ void Game::handleEvents()
 		if (event.type == sf::Event::Closed)
 			window->close();
 
-		if (event.type == sf::Event::MouseMoved)
-		{
-			auto pos = sf::Mouse::getPosition(*window);
-			startButton->checkHover(pos);
-			exitButton->checkHover(pos);
-			
-		}
-
 		if (event.type == sf::Event::MouseButtonPressed)
 		{
-			auto pos = sf::Mouse::getPosition(*window);
-			if (startButton->checkHover(pos))
+			for (auto& button : allButtons)
 			{
-				startButton->onClick();
-				gameState = GameState::INGAME;
-				startButton->setIsHidden(true);
+				if (button->getIsHovered())
+				{
+					button->onClick();
+				}
 			}
-			if (exitButton->checkHover(pos))
-			{
-				exitButton->onClick();
-				window->close();
-			}
-			
 		}
 
 		if (gameState == GameState::MENU)
@@ -147,7 +173,6 @@ void Game::handleEvents()
 			if (gameState == GameState::MENU)
 			{
 				gameState = GameState::INGAME;
-				startButton->setIsHidden(true);
 			}
 		}
 
@@ -194,11 +219,16 @@ void Game::render()
 
 	if (gameState == GameState::MENU)
 	{
-		difficultyText->setString("Current difficulty level: " + std::to_string(difficulty) + " (To change, press numbers 1 - 9)   Spacebar to start game");
+		difficultyText->setString("Current difficulty level (1-9):   " + std::to_string(difficulty) + "    Spacebar to start game");
 		window->draw(*difficultyText);
 
-		startButton->render(*window);
-		exitButton->render(*window);
+		lastScoreText->setString("Last score: " + std::to_string(lastScore));
+		window->draw(*lastScoreText);
+
+		for (auto& button : allButtons)
+		{
+			button->render(*window);
+		}
 	}
 
 	window->draw(*resetText);
@@ -240,8 +270,11 @@ void Game::inGameTick(float deltaTime)
 
 void Game::menuTick()
 {
-	startButton->Tick();
-	exitButton->Tick();
+	auto pos = sf::Mouse::getPosition(*window);
+	for (auto& button : allButtons)
+	{
+		button->Tick(pos);
+	}
 }
 
 sf::Vector2f Game::getRandomPos()
@@ -265,14 +298,28 @@ sf::Vector2f Game::getRandomPos()
 	return posToReturn;
 }
 
+void Game::startGame()
+{
+	gameState = GameState::INGAME;
+}
+
 void Game::resetGame()
 {
+	if (score > 0)
+	{
+		lastScore = score;
+	}
+
 	snake.reset();
 	if (dot.get())
 	{
 		dot.reset();
 	}
 	gameState = GameState::MENU;
-	startButton->setIsHidden(false);
 	init();
+}
+
+void Game::exitGame()
+{
+	window->close();
 }

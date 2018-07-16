@@ -1,7 +1,7 @@
 #include "Button.h"
 #include <iostream>
 
-Button::Button(sf::Vector2f pos, float width, float height, std::string text) : isHovered{ false }
+Button::Button(sf::Vector2f pos, float width, float height, std::string text) : isHovered{ false }, isHidden{ false }
 {
 	box = std::make_unique<sf::RectangleShape>(sf::Vector2f(width,height));
 
@@ -23,8 +23,10 @@ Button::Button(sf::Vector2f pos, float width, float height, std::string text) : 
 	buttonText->setPosition(box->getPosition());
 }
 
-void Button::Tick()
+void Button::Tick(sf::Vector2i mousePos)
 {
+	checkHover(mousePos);
+
 	if (isHovered)
 	{
 		box->setFillColor(hoveredColor);
@@ -60,6 +62,8 @@ bool Button::checkHover(sf::Vector2i mousePos)
 
 void Button::onClick()
 {
-	std::cout << "Button clicked!\n";
-	
+	if (onClickFunc)
+	{
+		onClickFunc();
+	}
 }

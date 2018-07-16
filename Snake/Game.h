@@ -20,7 +20,11 @@ public:
 
 	void init();
 
+	int difficulty;
 private:
+	void createButtons();
+	void createTexts();
+
 	void mainLoop();
 	void handleEvents();
 	void mainTick(); 
@@ -31,11 +35,12 @@ private:
 
 	sf::Vector2f getRandomPos();
 
+	void startGame();
 	void resetGame();
+	void exitGame();
 
 	int score;
-
-	int difficulty;
+	int lastScore;
 
 	GameState gameState;
 
@@ -53,9 +58,12 @@ private:
 	std::unique_ptr<sf::Font> font;
 	std::unique_ptr<sf::Text> difficultyText;
 	std::unique_ptr<sf::Text> scoreText;
+	std::unique_ptr<sf::Text> lastScoreText;
 	std::unique_ptr<sf::Text> resetText;
 
-	std::shared_ptr<Button> startButton;
+	std::vector<std::shared_ptr<Button>> allButtons;
 	std::shared_ptr<Button> exitButton;
+	std::shared_ptr<Button> incrementDifficultyButton;
+	std::shared_ptr<Button> decrementDifficultyButton;
 };
 
